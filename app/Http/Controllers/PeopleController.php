@@ -15,6 +15,7 @@ class PeopleController extends Controller
 
         $people = $parser->parseCsv($lines);
 
+        // return response()->json($people);
         return response()->json($people);
     }
 }

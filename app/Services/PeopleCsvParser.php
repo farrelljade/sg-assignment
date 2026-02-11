@@ -9,7 +9,10 @@ class PeopleCsvParser
         $people = [];
 
         foreach ($lines as $line) {
-            if ($line === "homeowner,\n") {
+            $line = trim($line);
+            $line = rtrim($line, ',');
+
+            if ($line === "homeowner") {
                 continue;
             }
 
