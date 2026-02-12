@@ -2,8 +2,17 @@
  
 namespace App\Services;
 
+use App\Data\PersonData;
+
 class PeopleCsvParser
 {
+    private const HEADER = 'homeowner';
+    private const SEPARATORS = [' and ', ' & '];
+    private const TITLES = ['Mr', 'Mrs', 'Ms', 'Dr', 'Prof', 'Mister'];
+
+    /**
+     * @return PersonData[]
+     */
     public function parseCsv(array $lines): array
     {
         $people = [];
@@ -12,7 +21,7 @@ class PeopleCsvParser
             $line = trim($line);
             $line = rtrim($line, ',');
 
-            if ($line === "homeowner") {
+            if ($line === self::HEADER) {
                 continue;
             }
 
@@ -26,24 +35,27 @@ class PeopleCsvParser
 
     private function separatePeople(string $line): array
     {
-        if (str_contains($line, ' and ')) {
-            return $this->expandBySeparator($line, ' and ');
+        foreach (self::SEPARATORS as $separator) {
+            if (str_contains($line, $separator)) {
+                return $this->expandBySeparator($line, $separator);
+            }
         }
-
-        if (str_contains($line, ' & ')) {
-            return $this->expandBySeparator($line, ' & ');
-        }
-
         return [$line];
     }
     
     private function expandBySeparator(string $line, string $separator): array
     {
-        $parts = array_map('trim', explode($separator, $line));
+        $parts = array_values(array_filter(
+            array_map('trim', explode($separator, $line)),
+            static fn (string $part): bool => $part !== ''
+        ));
+
+        if (count($parts) !== 2) {
+            return [trim($line)];
+        }
 
         [$first, $second] = $parts;
 
-        $titles = ['Mr', 'Mrs', 'Ms', 'Dr', 'Prof', 'Mister'];
         $firstParts = explode(' ', trim($first));
         $secondParts = explode(' ', trim($second));
 
@@ -51,7 +63,7 @@ class PeopleCsvParser
         $secondTitleRaw = $secondParts[0] ?? '';
 
         // Handle the case of "Mr and Mrs Smith" by sharing the surname.
-        if (count($firstParts) === 1 && in_array($firstTitleRaw, $titles, true) && in_array($secondTitleRaw, $titles, true)) {
+        if (count($firstParts) === 1 && in_array($firstTitleRaw, self::TITLES, true) && in_array($secondTitleRaw, self::TITLES, true)) {
             $restOfName = trim(substr($second, strlen($secondTitleRaw)));
 
             return [
@@ -63,12 +75,11 @@ class PeopleCsvParser
         return [$first, $second];
     }
 
-    private function parsePerson(string $text): array
+    private function parsePerson(string $text): PersonData
     {
         $parts = explode(' ', trim($text));
 
         $title = array_shift($parts) ?? '';
-        // dd($title);
 
         $firstName = null;
         $initial = null;
@@ -90,11 +101,11 @@ class PeopleCsvParser
             }
         }
 
-        return [
-            'title' => $title,
-            'first_name' => $firstName,
-            'initial' => $initial,
-            'last_name' => $lastName,
-        ];
+        return new PersonData(
+            title: $title,
+            firstName: $firstName,
+            initial: $initial,
+            lastName: $lastName,
+        );
     }
 }

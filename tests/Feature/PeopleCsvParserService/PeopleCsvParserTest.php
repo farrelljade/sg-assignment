@@ -6,6 +6,7 @@
 //     $response->assertStatus(200);
 // });
 
+use App\Data\PersonData;
 use App\Services\PeopleCsvParser;
 use Tests\TestCase;
 
@@ -19,13 +20,24 @@ class PeopleCsvParserTest extends TestCase
         $this->parser = new PeopleCsvParser();
     }
 
+    /**
+     * @param PersonData[] $people
+     */
+    private function asArray(array $people): array
+    {
+        return array_map(
+            static fn (PersonData $person): array => $person->toArray(),
+            $people
+        );
+    }
+
     public function test_it_parses_single_person(): void
     {
         $lines = [
             "Mr John Smith",
         ];
 
-        $result = $this->parser->parseCsv($lines);
+        $result = $this->asArray($this->parser->parseCsv($lines));
 
         $expected = [
             [
@@ -45,7 +57,7 @@ class PeopleCsvParserTest extends TestCase
             "Mr John Smith and Mrs Jane Smith",
         ];
 
-        $result = $this->parser->parseCsv($lines);
+        $result = $this->asArray($this->parser->parseCsv($lines));
 
         $expected = [
             [
@@ -71,7 +83,7 @@ class PeopleCsvParserTest extends TestCase
             "Dr & Mrs Joe Bloggs",
         ];
 
-        $result = $this->parser->parseCsv($lines);
+        $result = $this->asArray($this->parser->parseCsv($lines));
 
         $expected = [
             [
@@ -97,7 +109,7 @@ class PeopleCsvParserTest extends TestCase
             "Mr F. Fredrickson",
         ];
 
-        $result = $this->parser->parseCsv($lines);
+        $result = $this->asArray($this->parser->parseCsv($lines));
 
         $expected = [
             [
@@ -117,7 +129,7 @@ class PeopleCsvParserTest extends TestCase
             "Mr M Mackie",
         ];
 
-        $result = $this->parser->parseCsv($lines);
+        $result = $this->asArray($this->parser->parseCsv($lines));
 
         $expected = [
             [
@@ -138,7 +150,7 @@ class PeopleCsvParserTest extends TestCase
             "Mr John Smith",
         ];
 
-        $result = $this->parser->parseCsv($lines);
+        $result = $this->asArray($this->parser->parseCsv($lines));
 
         $expected = [
             [
